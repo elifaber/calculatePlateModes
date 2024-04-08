@@ -1,4 +1,4 @@
-function [fLong, fTrans,fBend] = calculatePlateModes(length, width, thickness, n_modes, density, E, P)
+function [fLong, fTrans,fBend,fEig] = calculatePlateModes(length, width, thickness, n_modes, density, E, P)
 %   This function is meant to give different approaches to the calculation
 %   of modes for a plate.there is a computational method, which is
 %   the returned frequencies, and there is the eigenvalue method which is 
@@ -14,9 +14,16 @@ function [fLong, fTrans,fBend] = calculatePlateModes(length, width, thickness, n
 %   P         - Poisson ratio of the material
 %
 % Outputs:
-%   fLong     - Longitudinal modes of vibration for the plate
-%   fTrans    - Transverse shear modes of vibration for the plate
-%   fBend     - Bending modes of vibration for the plate
+%   fLong     - Longitudinal modes of vibration for the plate as a 2 by
+%               n_modes vector representing the longitudinal modes for
+%               length and width
+%   fTrans    - Transverse shear modes of vibration for the plate as a 2 
+%               by n_modes vector representing the transverse modes for
+%               length and width
+%   fBend     - Bending modes of vibration for the plate as a 2 by n_modes
+%               vector representing the flexural modes for length and width
+%   fEig      - The modes found from the eigenvalues generated from the 
+%               finite difference method
 
 %% Example for plate of 4x8 feet made from 26 gauge galvanized steel
 
@@ -29,13 +36,13 @@ function [fLong, fTrans,fBend] = calculatePlateModes(length, width, thickness, n
 % poisson = 0.29;
 % 
 % 
-% [longitudinal_modes,transversal_modes,beinding_modes] = calculatePlateModes(length ...
+% [longitudinal_modes,transversal_modes,beinding_modes,eigenvalue_modes] = calculatePlateModes(length ...
 %     ,width,thickness,n_modes,density,youngs_mod,poisson);
 
 
 %% Start of code
 % unit conversion
-E = E * 1e9;
+E = E * 1000000000;
 
 %% Longitudinal
 % defining speed of sound of longitudinal waves in plate
@@ -72,7 +79,7 @@ for n = 1:n_modes
 end
 
 
-%% Classical plate theory
+%% Modal Analysis
 
 % Define number of grid points and grid spacing
 Nx = 30; 
@@ -88,61 +95,42 @@ x = linspace(0, length, Nx);
 y = linspace(0, width, Ny);
 [X, Y] = meshgrid(x, y);
 
-% Apply Boundary Conditions (Simply Supported)
-w(:, 1) = 0;
-w(:, end) = 0;
-w(1, :) = 0;
-w(end, :) = 0;
-
-% Solve Plate Equation Using Finite Differences (Without Load)
-for iter = 1:10000 %(adjust or use convergence criteria)
-    w_old = w; % Store old deflection for convergence check
-    
-    for i = 2:Nx-1
-        for j = 2:Ny-1
-            % Plate equation in 2D
-            wxx = (w(j, i+1) - 2*w(j, i) + w(j, i-1)) / h^2;
-            wyy = (w(j+1, i) - 2*w(j, i) + w(j-1, i)) / k^2;
-            w(j, i) = (E*thickness^3 / (12*(1 - thickness^2))) * (wxx + 2*(1 + thickness)*wyy);
-        end
-    end
-    
-    % Check for convergence
-    if max(abs(w_old(:) - w(:))) < 1e-6
-        break;
-    end
-end
-
-%% Modal Analysis
 % Formulate the stiffness matrix (using finite differences approximation)
 K = zeros(Nx*Ny);
+
 for i = 1:Nx
     for j = 1:Ny
         % Node number
-        n = (j - 1) * Nx + i; 
+        n = (j - 1) * Nx + i;
+        
+        % Calculate plate equation terms
+        Dxx = E * thickness^3 / (12 * (1 - P^2));
+        Dyy = E * thickness^3 / (12 * (1 - P^2)); 
+        
+        % Define terms for stiffness matrix
         if i > 1
             % Left neighbor
-            K(n, n-1) = 1 / h^2; 
+            K(n, n-1) = Dxx / (h^4);
         end
         if i < Nx
             % Right neighbor
-            K(n, n+1) = 1 / h^2; 
+            K(n, n+1) = Dxx / (h^4);
         end
         if j > 1
-            %Bottom neighbor
-            K(n, n-Nx) = 1 / k^2;
+            % Bottom neighbor
+            K(n, n-Nx) = Dyy / (k^4);
         end
         if j < Ny
             % Top neighbor
-            K(n, n+Nx) = 1 / k^2; 
+            K(n, n+Nx) = Dyy / (k^4);
         end
         % Self term
-        K(n, n) = -2 * (1/h^2 + 1/k^2); 
+        K(n, n) = -2 * (Dxx / (h^4) + Dyy / (k^4));
     end
 end
 
 % Solve the eigenvalue problem using sparse solver
-num_modes_to_compute = 9;
+num_modes_to_compute = n_modes;
 % Suppress output
 options = struct('disp',0); 
 % 'SM' for smallest magnitude eigenvalues
@@ -150,7 +138,8 @@ options = struct('disp',0);
 
 % Extract eigenvalues (frequencies) and eigenvectors (mode shapes)
 % Convert angular frequencies to Hz
-frequencies = sqrt(-D)./2*pi; 
+fEig = diag(sqrt(-D./(2*pi))); 
+fEig = fEig';
 
 % Plot Mode Shapes
 num_modes_to_plot = 9;
