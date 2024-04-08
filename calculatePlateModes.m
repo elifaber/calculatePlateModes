@@ -162,7 +162,7 @@ for i = 1:num_modes_to_plot
     xlabel('x (m)');
     ylabel('y (m)');
     zlabel('Deflection (m)');
-    title(['Mode at ', num2str(frequencies(i,i)), ' Hz']);
+    title(['Mode ', num2str(i)]);
     colorbar;
 end
 
