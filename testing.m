@@ -11,3 +11,9 @@ poisson = 0.29;
 
 [fLong,fTrans,fBend,fEig] = calculatePlateModes(length ...
     ,width,thickness,n_modes,density,youngs_mod,poisson);
+
+
+for i = 1:9
+    disp(["Bending Mode length ", i ,": " ,fBend(1,i)]);
+    disp(["Bending Mode width ", i ,": " ,fBend(2,i)]);
+end

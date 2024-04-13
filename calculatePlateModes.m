@@ -166,7 +166,6 @@ function [fLong, fTrans,fBend,fEig] = calculatePlateModes(length, width, thickne
         xlabel('x (m)');
         ylabel('y (m)');
         zlabel('Deflection (m)');
-        title(['Mode ', num2str(i)]);
         colorbar;
     end
 end
