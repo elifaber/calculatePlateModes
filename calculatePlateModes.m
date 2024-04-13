@@ -169,5 +169,5 @@ function [fLong, fTrans,fBend,fEig] = calculatePlateModes(length, width, thickne
         title(['Mode ', num2str(i)]);
         colorbar;
     end
-    end
+end
     
