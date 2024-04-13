@@ -10,3 +10,4 @@ I also played around with generating a model from the equations used in classica
 
 I experimentally found that the bending modes were the most accurate, and I hope that this can be useful in anyone elses future plate modelling adventures!
 
+The testing file is just for my own testing of the file
