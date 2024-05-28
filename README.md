@@ -8,6 +8,6 @@ I calculated the modes analytically by calculating the speed of sound in the med
 
 I also played around with generating a model from the equations used in classical plate theory. I believe these visualizations to be roughly correct, but the frequencies calculated are most likely inaccurate, as I mentioned before.
 
-I experimentally found that the bending modes were the most accurate, and I hope that this can be useful in anyone elses future plate modelling adventures!
+** I experimentally found that the calculated bending modes were the most accurate ** , and I hope that this can be useful in anyone elses future plate modelling adventures!
 
 The testing file is just for my own testing of the file
