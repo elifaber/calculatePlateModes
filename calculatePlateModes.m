@@ -40,14 +40,12 @@ function [fLong, fTrans,fBend,fEig] = calculatePlateModes(length, width, thickne
     %     ,width,thickness,n_modes,density,youngs_mod,poisson);
     
     
-    %% Start of code
     % unit conversion
     E = E * 1e9;
     
     %% Longitudinal
-    % defining speed of sound of longitudinal waves in plate
+    % defining speed of sound
     cLong = sqrt(E / density);
-    % initializing frequency vector
     fLong = zeros(2, n_modes);
     for n = 1:n_modes
         fLong(1, n) = n * cLong / length;
@@ -57,7 +55,7 @@ function [fLong, fTrans,fBend,fEig] = calculatePlateModes(length, width, thickne
     end
     
     %% Transverse shear
-    % defining speed of sound of transverse shear waves in plate
+    % defining speed of sound
     G = E / (2 * (1 + P));
     cTrans = sqrt(G / density);
     fTrans = zeros(2, n_modes);
@@ -95,18 +93,16 @@ function [fLong, fTrans,fBend,fEig] = calculatePlateModes(length, width, thickne
     
     %% Finite Element Analysis
     
-    % Define number of grid points and grid spacing
+    % Define n gridpoints
     Nx = 30; 
     Ny = 30; 
     h = length / (Nx - 1); 
     k = width / (Ny - 1); 
-    
-    % Create Grid
     x = linspace(0, length, Nx);
     y = linspace(0, width, Ny);
     [X, Y] = meshgrid(x, y);
     
-    % Formulate the stiffness matrix (using finite differences approximation)
+    % stiffness matrix
     K = zeros(Nx*Ny, Nx*Ny);
     
     for i = 1:Nx
@@ -114,11 +110,10 @@ function [fLong, fTrans,fBend,fEig] = calculatePlateModes(length, width, thickne
             % Node number
             n = (j - 1) * Nx + i;
             
-            % Calculate plate equation terms
+            % plate equation terms
             Dxx = E * thickness^3 / (12 * (1 - P^2));
             Dyy = E * thickness^3 / (12 * (1 - P^2)); 
             
-            % Define terms for stiffness matrix
             if i > 1
                 % Left neighbor
                 K(n, n-1) = Dxx / (h^4);
@@ -140,20 +135,13 @@ function [fLong, fTrans,fBend,fEig] = calculatePlateModes(length, width, thickne
         end
     end
 
-    
-    % Solve the eigenvalue problem using sparse solver
+    % eigenvalue solver
     num_modes_to_compute = n_modes;
     % Suppress output
     options = struct('disp',0); 
     
-    % Initialize variables for convergence check
     
-        % Solve eigenvalue problem
     [V, D] = eigs(K, num_modes_to_compute, 'SM', options);
-    %[V, D] = eig(K);
-        
-    % Extract eigenvalues (frequencies) and eigenvectors (mode shapes)
-    % Convert angular frequencies to Hz
     fEig = diag(sqrt(-D./(2*pi))); 
     
     % Plot Mode Shapes
